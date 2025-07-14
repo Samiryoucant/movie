@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What Should I Watch? - Movie Recommender</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        
+        .movie-card {
+            transition: all 0.3s ease;
+            transform-style: preserve-3d;
+        }
+        
+        .movie-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .genre-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .genre-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .genre-btn.active {
+            transform: scale(1.1);
+            box-shadow: 0 0 0 2px white, 0 0 0 4px #3b82f6;
+        }
+        
+        .loading-dots::after {
+            content: '.';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+            80%, 100% { content: ''; }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
+                What Should I Watch?
+            </h1>
+            <p class="text-lg text-gray-300 max-w-2xl mx-auto">
+                Stuck deciding what to watch? Let our AI-powered recommender find your perfect movie or show!
+            </p>
+        </header>
+        
+        <!-- Main Content -->
+        <main>
+            <!-- Recommendation Form -->
+            <div class="bg-gray-800 rounded-xl p-6 shadow-lg mb-12 max-w-3xl mx-auto">
+                <h2 class="text-2xl font-semibold mb-6 flex items-center">
+                    <i class="fas fa-sliders-h mr-3 text-blue-400"></i> Customize Your Preferences
+                </h2>
+                
+                <div class="space-y-6">
+                    <!-- Mood Selection -->
+                    <div>
+                        <h3 class="text-lg font-medium mb-3">How are you feeling?</h3>
+                        <div class="flex flex-wrap gap-3">
+                            <button class="genre-btn px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-500" data-mood="happy">
+                                <i class="fas fa-laugh-beam mr-2"></i> Happy
+                            </button>
+                            <button class="genre-btn px-4 py-2 rounded-full bg-indigo-600 hover:bg-indigo-500" data-mood="adventurous">
+                                <i class="fas fa-hiking mr-2"></i> Adventurous
+                            </button>
+                            <button class="genre-btn px-4 py-2 rounded-full bg-purple-600 hover:bg-purple-500" data-mood="romantic">
+                                <i class="fas fa-heart mr-2"></i> Romantic
+                            </button>
+                            <button class="genre-btn px-4 py-2 rounded-full bg-red-600 hover:bg-red-500" data-mood="thrilled">
+                                <i class="fas fa-bolt mr-2"></i> Thrilled
+                            </button>
+                            <button class="genre-btn px-4 py-2 rounded-full bg-yellow-600 hover:bg-yellow-500" data-mood="thoughtful">
+                                <i class="fas fa-brain mr-2"></i> Thoughtful
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Genre Selection -->
+                    <div>
+                        <h3 class="text-lg font-medium mb-3">Preferred Genres</h3>
+                        <div class="flex flex-wrap gap-3">
+                            <button class="genre-btn px-4 py-2 rounded-full bg-gray-700 hover:bg-gray-600" data-genre="action">
+                                <i class="fas fa-explosion mr-2"></i> Action
+                            </button>
+                            <button class="genre-btn px-4 py-2 rounded-full bg-gray-700 hover:bg-gray-600" data-genre="comedy">
+                                <i class="fas fa-laugh-squint mr-2"></i> Comedy
+                            </button>
+                            <button class="genre-btn px-4 py-2 rounded-full bg-gray-700 hover:bg-gray-600" data-genre="drama">
+                                <i class="fas fa-theater-masks mr-2"></i> Drama
+                            </button>
+                            <button class="genre-btn px-4 py-2 rounded-full bg-gray-700 hover:bg-gray-600" data-genre="sci-fi">
+                                <i class="fas fa-robot mr-2"></i> Sci-Fi
+                            </button>
+                            <button class="genre-btn px-4 py-2 rounded-full bg-gray-700 hover:bg-gray-600" data-genre="horror">
+                                <i class="fas fa-ghost mr-2"></i> Horror
+                            </button>
+                            <button class="genre-btn px-4 py-2 rounded-full bg-gray-700 hover:bg-gray-600" data-genre="romance">
+                                <i class="fas fa-kiss-wink-heart mr-2"></i> Romance
+                            </button>
+                            <button class="genre-btn px-4 py-2 rounded-full bg-gray-700 hover:bg-gray-600" data-genre="fantasy">
+                                <i class="fas fa-dragon mr-2"></i> Fantasy
+                            </button>
+                            <button class="genre-btn px-4 py-2 rounded-full bg-gray-700 hover:bg-gray-600" data-genre="documentary">
+                                <i class="fas fa-globe mr-2"></i> Documentary
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Time Available -->
+                    <div>
+                        <h3 class="text-lg font-medium mb-3">How much time do you have?</h3>
+                        <div class="flex flex-wrap gap-3">
+                            <button class="genre-btn px-4 py-2 rounded-full bg-green-600 hover:bg-green-500" data-time="short">
+                                <i class="fas fa-hourglass-start mr-2"></i> Short (Under 90min)
+                            </button>
+                            <button class="genre-btn px-4 py-2 rounded-full bg-teal-600 hover:bg-teal-500" data-time="medium">
+                                <i class="fas fa-hourglass-half mr-2"></i> Medium (90-150min)
+                            </button>
+                            <button class="genre-btn px-4 py-2 rounded-full bg-cyan-600 hover:bg-cyan-500" data-time="long">
+                                <i class="fas fa-hourglass-end mr-2"></i> Long (150min+)
+                            </button>
+                            <button class="genre-btn px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-500" data-time="series">
+                                <i class="fas fa-tv mr-2"></i> TV Series
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Era Preference -->
+                    <div>
+                        <h3 class="text-lg font-medium mb-3">Preferred Era</h3>
+                        <div class="flex flex-wrap gap-3">
+                            <button class="genre-btn px-4 py-2 rounded-full bg-amber-600 hover:bg-amber-500" data-era="classic">
+                                <i class="fas fa-film mr-2"></i> Classic (Pre-1980)
+                            </button>
+                            <button class="genre-btn px-4 py-2 rounded-full bg-orange-600 hover:bg-orange-500" data-era="modern">
+                                <i class="fas fa-video mr-2"></i> Modern (1980-2010)
+                            </button>
+                            <button class="genre-btn px-4 py-2 rounded-full bg-pink-600 hover:bg-pink-500" data-era="recent">
+                                <i class="fas fa-star mr-2"></i> Recent (2010+)
+                            </button>
+                            <button class="genre-btn px-4 py-2 rounded-full bg-fuchsia-600 hover:bg-fuchsia-500" data-era="any">
+                                <i class="fas fa-infinity mr-2"></i> Any Era
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="pt-4">
+                        <button id="recommendBtn" class="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 rounded-lg font-semibold text-lg transition-all transform hover:scale-105 shadow-lg">
+                            <i class="fas fa-magic mr-2"></i> Find My Perfect Watch
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Results Section -->
+            <div id="resultsSection" class="hidden">
+                <h2 class="text-3xl font-bold mb-8 text-center flex items-center justify-center">
+                    <i class="fas fa-clapperboard mr-3 text-yellow-400"></i> Your Personalized Recommendations
+                </h2>
+                
+                <div id="loading" class="text-center py-12 hidden">
+                    <div class="inline-block text-2xl loading-dots">Finding perfect matches</div>
+                </div>
+                
+                <div id="recommendations" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Recommendations will be inserted here by JavaScript -->
+                </div>
+                
+                <div class="text-center mt-10">
+                    <button id="refreshBtn" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-medium">
+                        <i class="fas fa-sync-alt mr-2"></i> Get Different Recommendations
+                    </button>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="mt-16 pt-8 border-t border-gray-800 text-center text-gray-400">
+            <p>Made with <i class="fas fa-heart text-red-500"></i> for movie lovers</p>
+            <p class="mt-2 text-sm">© 2023 What Should I Watch? Recommender</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sample movie database
+            const movieDatabase = [
+                {
+                    title: "The Shawshank Redemption",
+                    year: 1994,
+                    genre: ["drama"],
+                    mood: "thoughtful",
+                    runtime: 142,
+                    era: "modern",
+                    type: "movie",
+                    rating: 9.3,
+                    description: "Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.",
+                    poster: "https://m.media-amazon.com/images/M/MV5BNDE3ODcxYzMtY2YzZC00NmNlLWJiNDMtZDViZWM2MzIxZDYwXkEyXkFqcGdeQXVyNjAwNDUxODI@._V1_.jpg"
+                },
+                {
+                    title: "The Dark Knight",
+                    year: 2008,
+                    genre: ["action", "drama"],
+                    mood: "thrilled",
+                    runtime: 152,
+                    era: "modern",
+                    type: "movie",
+                    rating: 9.0,
+                    description: "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests of his ability to fight injustice.",
+                    poster: "https://m.media-amazon.com/images/M/MV5BMTMxNTMwODM0NF5BMl5BanBnXkFtZTcwODAyMTk2Mw@@._V1_.jpg"
+                },
+                {
+                    title: "Pulp Fiction",
+                    year: 1994,
+                    genre: ["drama", "crime"],
+                    mood: "adventurous",
+                    runtime: 154,
+                    era: "modern",
+                    type: "movie",
+                    rating: 8.9,
+                    description: "The lives of two mob hitmen, a boxer, a gangster and his wife, and a pair of diner bandits intertwine in four tales of violence and redemption.",
+                    poster: "https://m.media-amazon.com/images/M/MV5BNGNhMDIzZTUtNTBlZi00MTRlLWFjM2ItYzViMjE3YzI5MjljXkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_.jpg"
+                },
+                {
+                    title: "The Lord of the Rings: The Fellowship of the Ring",
+                    year: 2001,
+                    genre: ["fantasy", "adventure"],
+                    mood: "adventurous",
+                    runtime: 178,
+                    era: "modern",
+                    type: "movie",
+                    rating: 8.8,
+                    description: "A meek Hobbit from the Shire and eight companions set out on a journey to destroy the powerful One Ring and save Middle-earth from the Dark Lord Sauron.",
+                    poster: "https://m.media-amazon.com/images/M/MV5BN2EyZjM3NzUtNWUzMi00MTgxLWI0NTctMzY4M2VlOTdjZWRiXkEyXkFqcGdeQXVyNDUzOTQ5MjY@._V1_.jpg"
+                },
+                {
+                    title: "Forrest Gump",
+                    year: 1994,
+                    genre: ["drama", "romance"],
+                    mood: "happy",
+                    runtime: 142,
+                    era: "modern",
+                    type: "movie",
+                    rating: 8.8,
+                    description: "The presidencies of Kennedy and Johnson, the events of Vietnam, Watergate, and other historical events unfold through the perspective of an Alabama man with an IQ of 75.",
+                    poster: "https://m.media-amazon.com/images/M/MV5BNWIwODRlZTUtY2U3ZS00Yzg1LWJhNzYtMmZiYmEyNmU1NjMzXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_.jpg"
+                },
+                {
+                    title: "Inception",
+                    year: 2010,
+                    genre: ["sci-fi", "action"],
+                    mood: "thoughtful",
+                    runtime: 148,
+                    era: "recent",
+                    type: "movie",
+                    rating: 8.8,
+                    description: "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.",
+                    poster: "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_.jpg"
+                },
+                {
+                    title: "The Matrix",
+                    year: 1999,
+                    genre: ["sci-fi", "action"],
+                    mood: "thrilled",
+                    runtime: 136,
+                    era: "modern",
+                    type: "movie",
+                    rating: 8.7,
+                    description: "A computer hacker learns from mysterious rebels about the true nature of his reality and his role in the war against its controllers.",
+                    poster: "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_.jpg"
+                },
+                {
+                    title: "Goodfellas",
+                    year: 1990,
+                    genre: ["drama", "crime"],
+                    mood: "adventurous",
+                    runtime: 146,
+                    era: "modern",
+                    type: "movie",
+                    rating: 8.7,
+                    description: "The story of Henry Hill and his life in the mob, covering his relationship with his wife Karen Hill and his mob partners Jimmy Conway and Tommy DeVito.",
+                    poster: "https://m.media-amazon.com/images/M/MV5BY2NkZjEzMDgtN2RjYy00YzM1LWI4ZmQtMjIwYjAxNDQ4NzBhXkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_.jpg"
+                },
+                {
+                    title: "The Silence of the Lambs",
+                    year: 1991,
+                    genre: ["horror", "thriller"],
+                    mood: "thrilled",
+                    runtime: 118,
+                    era: "modern",
+                    type: "movie",
+                    rating: 8.6,
+                    description: "A young F.B.I. cadet must receive the help of an incarcerated and manipulative cannibal killer to help catch another serial killer.",
+                    poster: "https://m.media-amazon.com/images/M/MV5BNjNhZTk0ZmEtNjJhMi00YzFlLWE1MmEtYzM1M2ZmMGMwMTU4XkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_.jpg"
+                },
+                {
+                    title: "Fight Club",
+                    year: 1999,
+                    genre: ["drama"],
+                    mood: "thoughtful",
+                    runtime: 139,
+                    era: "modern",
+                    type: "movie",
+                    rating: 8.8,
+                    description: "An insomniac office worker and a devil-may-care soapmaker form an underground fight club that evolves into something much, much more.",
+                    poster: "https://m.media-amazon.com/images/M/MV5BNDIzNDU0YzEtYzE5Ni00ZjlkLTk5ZjgtNjM3NWE4YzA3Nzk3XkEyXkFqcGdeQXVyMjUzOTY1NTc@._V1_.jpg"
+                },
+                {
+                    title: "The Godfather",
+                    year: 1972,
+                    genre: ["drama", "crime"],
+                    mood: "thoughtful",
+                    runtime: 175,
+                    era: "classic",
+                    type: "movie",
+                    rating: 9.2,
+                    description: "The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son.",
+                    poster: "https://m.media-amazon.com/images/M/MV5BM2MyNjYxNmUtYTAwNi00MTYxLWJmNWYtYzZlODY3ZTk3OTFlXkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_.jpg"
+                },
+                {
+                    title: "Parasite",
+                    year: 2019,
+                    genre: ["drama", "thriller"],
+                    mood: "thoughtful",
+                    runtime: 132,
+                    era: "recent",
+                    type: "movie",
+                    rating: 8.6,
+                    description: "Greed and class discrimination threaten the newly formed symbiotic relationship between the wealthy Park family and the destitute Kim clan.",
+                    poster: "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_.jpg"
+                },
+                {
+                    title: "Stranger Things",
+                    year: 2016,
+                    genre: ["sci-fi", "horror"],
+                    mood: "thrilled",
+                    runtime: null,
+                    era: "recent",
+                    type: "series",
+                    rating: 8.7,
+                    description: "When a young boy vanishes, a small town uncovers a mystery involving secret experiments, terrifying supernatural forces and one strange little girl.",
+                    poster: "https://m.media-amazon.com/images/M/MV5BMDZkYmVhNjMtNWU4MC00MDQxLWE3MjYtZGMzZWI1ZjhlOWJmXkEyXkFqcGdeQXVyMTkxNjUyNQ@@._V1_.jpg"
+                },
+                {
+                    title: "The Office (US)",
+                    year: 2005,
+                    genre: ["comedy"],
+                    mood: "happy",
+                    runtime: null,
+                    era: "modern",
+                    type: "series",
+                    rating: 9.0,
+                    description: "A mockumentary on a group of typical office workers, where the workday consists of ego clashes, inappropriate behavior, and tedium.",
+                    poster: "https://m.media-amazon.com/images/M/MV5BMDNkOTE4NDQtMTNmYi00MWE0LWE4ZTktYTc0NzhhNWIzNzJiXkEyXkFqcGdeQXVyMzQ2MDI5NjU@._V1_.jpg"
+                },
+                {
+                    title: "Breaking Bad",
+                    year: 2008,
+                    genre: ["drama", "crime"],
+                    mood: "thrilled",
+                    runtime: null,
+                    era: "modern",
+                    type: "series",
+                    rating: 9.5,
+                    description: "A high school chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing and selling methamphetamine to secure his family's future.",
+                    poster: "https://m.media-amazon.com/images/M/MV5BYmQ4YWMxYjUtNjZmYi00MDQ1LWFjMjMtNjA5ZDdiYjdiODU5XkEyXkFqcGdeQXVyMTMzNDExODE5._V1_.jpg"
+                },
+                {
+                    title: "Friends",
+                    year: 1994,
+                    genre: ["comedy", "romance"],
+                    mood: "happy",
+                    runtime: null,
+                    era: "modern",
+                    type: "series",
+                    rating: 8.9,
+                    description: "Follows the personal and professional lives of six twenty to thirty-something-year-old friends living in Manhattan.",
+                    poster: "https://m.media-amazon.com/images/M/MV5BNDVkYjU0MzctMWRmZi00NTkxLTgwZWEtOWVhYjZlYjllYmU4XkEyXkFqcGdeQXVyNTA4NzY1MzY@._V1_.jpg"
+                },
+                {
+                    title: "Game of Thrones",
+                    year: 2011,
+                    genre: ["fantasy", "drama"],
+                    mood: "adventurous",
+                    runtime: null,
+                    era: "recent",
+                    type: "series",
+                    rating: 9.2,
+                    description: "Nine noble families fight for control over the lands of Westeros, while an ancient enemy returns after being dormant for millennia.",
+                    poster: "https://m.media-amazon.com/images/M/MV5BYTRiNDQwYzAtMzVlZS00NTI5LWJjYjUtMzkwNTUzMWMxZTllXkEyXkFqcGdeQXVyNDIzMzcwNjc@._V1_.jpg"
+                },
+                {
+                    title: "The Crown",
+                    year: 2016,
+                    genre: ["drama", "history"],
+                    mood: "thoughtful",
+                    runtime: null,
+                    era: "recent",
+                    type: "series",
+                    rating: 8.7,
+                    description: "Follows the political rivalries and romance of Queen Elizabeth II's reign and the events that shaped the second half of the twentieth century.",
+                    poster: "https://m.media-amazon.com/images/M/MV5BZTEyNjBjYmYtYWYxYi00MmQyLThlYmItY2I4NzMxMjlmNzIxXkEyXkFqcGdeQXVyMTU3ODI3MTk2._V1_.jpg"
+                },
+                {
+                    title: "The Marvelous Mrs. Maisel",
+                    year: 2017,
+                    genre: ["comedy", "drama"],
+                    mood: "happy",
+                    runtime: null,
+                    era: "recent",
+                    type: "series",
+                    rating: 8.7,
+                    description: "A housewife in the 1950s decides to become a stand-up comic.",
+                    poster: "https://m.media-amazon.com/images/M/MV5BOWQ1YzRjMjEtYjM0OS00YTE4LWEyYzctYzQwODk4Y2FjZDA3XkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_.jpg"
+                }
+            ];
+
+            // DOM elements
+            const recommendBtn = document.getElementById('recommendBtn');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const resultsSection = document.getElementById('resultsSection');
+            const loadingElement = document.getElementById('loading');
+            const recommendationsContainer = document.getElementById('recommendations');
+            const genreButtons = document.querySelectorAll('.genre-btn');
+            
+            // User preferences
+            let userPreferences = {
+                mood: null,
+                genres: [],
+                time: null,
+                era: null
+            };
+            
+            // Add event listeners to genre buttons
+            genreButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Toggle active state
+                    this.classList.toggle('active');
+                    
+                    // Update preferences based on button type
+                    if (this.dataset.mood) {
+                        if (this.classList.contains('active')) {
+                            // Only allow one mood selection
+                            document.querySelectorAll('[data-mood]').forEach(btn => {
+                                if (btn !== this) btn.classList.remove('active');
+                            });
+                            userPreferences.mood = this.dataset.mood;
+                        } else {
+                            userPreferences.mood = null;
+                        }
+                    } 
+                    else if (this.dataset.genre) {
+                        if (this.classList.contains('active')) {
+                            userPreferences.genres.push(this.dataset.genre);
+                        } else {
+                            userPreferences.genres = userPreferences.genres.filter(g => g !== this.dataset.genre);
+                        }
+                    }
+                    else if (this.dataset.time) {
+                        if (this.classList.contains('active')) {
+                            // Only allow one time selection
+                            document.querySelectorAll('[data-time]').forEach(btn => {
+                                if (btn !== this) btn.classList.remove('active');
+                            });
+                            userPreferences.time = this.dataset.time;
+                        } else {
+                            userPreferences.time = null;
+                        }
+                    }
+                    else if (this.dataset.era) {
+                        if (this.classList.contains('active')) {
+                            // Only allow one era selection
+                            document.querySelectorAll('[data-era]').forEach(btn => {
+                                if (btn !== this) btn.classList.remove('active');
+                            });
+                            userPreferences.era = this.dataset.era;
+                        } else {
+                            userPreferences.era = null;
+                        }
+                    }
+                });
+            });
+            
+            // Recommend button click handler
+            recommendBtn.addEventListener('click', function() {
+                // Show loading state
+                resultsSection.classList.remove('hidden');
+                loadingElement.classList.remove('hidden');
+                recommendationsContainer.innerHTML = '';
+                
+                // Scroll to results
+                resultsSection.scrollIntoView({ behavior: 'smooth' });
+                
+                // Simulate API call delay
+                setTimeout(() => {
+                    getRecommendations();
+                    loadingElement.classList.add('hidden');
+                }, 1500);
+            });
+            
+            // Refresh button click handler
+            refreshBtn.addEventListener('click', function() {
+                // Show loading state
+                loadingElement.classList.remove('hidden');
+                recommendationsContainer.innerHTML = '';
+                
+                // Simulate API call delay
+                setTimeout(() => {
+                    getRecommendations();
+                    loadingElement.classList.add('hidden');
+                }, 1000);
+            });
+            
+            // Get recommendations based on user preferences
+            function getRecommendations() {
+                // Filter movies based on preferences
+                let filteredMovies = movieDatabase.filter(movie => {
+                    // Check mood
+                    if (userPreferences.mood && movie.mood !== userPreferences.mood) {
+                        return false;
+                    }
+                    
+                    // Check genres (if any selected)
+                    if (userPreferences.genres.length > 0) {
+                        const hasMatchingGenre = userPreferences.genres.some(genre => 
+                            movie.genre.includes(genre)
+                        );
+                        if (!hasMatchingGenre) return false;
+                    }
+                    
+                    // Check runtime
+                    if (userPreferences.time) {
+                        if (userPreferences.time === 'short' && (movie.runtime === null || movie.runtime > 90)) {
+                            return false;
+                        }
+                        if (userPreferences.time === 'medium' && (movie.runtime === null || movie.runtime < 90 || movie.runtime > 150)) {
+                            return false;
+                        }
+                        if (userPreferences.time === 'long' && (movie.runtime === null || movie.runtime < 150)) {
+                            return false;
+                        }
+                        if (userPreferences.time === 'series' && movie.type !== 'series') {
+                            return false;
+                        }
+                    }
+                    
+                    // Check era
+                    if (userPreferences.era && userPreferences.era !== 'any') {
+                        if (movie.era !== userPreferences.era) {
+                            return false;
+                        }
+                    }
+                    
+                    return true;
+                });
+                
+                // If no filters selected, show random popular movies
+                if (!userPreferences.mood && userPreferences.genres.length === 0 && 
+                    !userPreferences.time && !userPreferences.era) {
+                    filteredMovies = [...movieDatabase]
+                        .sort(() => 0.5 - Math.random())
+                        .slice(0, 6);
+                }
+                
+                // Sort by rating (highest first)
+                filteredMovies.sort((a, b) => b.rating - a.rating);
+                
+                // Get top 6 recommendations
+                const recommendations = filteredMovies.slice(0, 6);
+                
+                // Display recommendations
+                displayRecommendations(recommendations);
+            }
+            
+            // Display recommendations in the UI
+            function displayRecommendations(recommendations) {
+                recommendationsContainer.innerHTML = '';
+                
+                if (recommendations.length === 0) {
+                    recommendationsContainer.innerHTML = `
+                        <div class="col-span-full text-center py-12">
+                            <i class="fas fa-film text-5xl text-gray-600 mb-4"></i>
+                            <h3 class="text-2xl font-semibold mb-2">No matches found</h3>
+                            <p class="text-gray-400">Try adjusting your filters to get more results</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                recommendations.forEach((movie, index) => {
+                    const card = document.createElement('div');
+                    card.className = `movie-card bg-gray-800 rounded-lg overflow-hidden shadow-lg fade-in`;
+                    card.style.animationDelay = `${index * 0.1}s`;
+                    
+                    const typeBadge = movie.type === 'series' ? 
+                        `<span class="absolute top-2 right-2 bg-purple-600 text-xs font-bold px-2 py-1 rounded-full">TV SERIES</span>` : 
+                        `<span class="absolute top-2 right-2 bg-blue-600 text-xs font-bold px-2 py-1 rounded-full">MOVIE</span>`;
+                    
+                    const runtimeInfo = movie.runtime ? 
+                        `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m` : 
+                        'Multiple episodes';
+                    
+                    card.innerHTML = `
+                        <div class="relative">
+                            <img src="${movie.poster}" alt="${movie.title}" class="w-full h-64 object-cover">
+                            ${typeBadge}
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                                <div class="flex items-center">
+                                    <i class="fas fa-star text-yellow-400 mr-1"></i>
+                                    <span class="font-bold">${movie.rating.toFixed(1)}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="text-xl font-bold mb-1">${movie.title}</h3>
+                            <div class="flex items-center text-sm text-gray-400 mb-3">
+                                <span>${movie.year}</span>
+                                <span class="mx-2">•</span>
+                                <span>${runtimeInfo}</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1 mb-3">
+                                ${movie.genre.map(genre => `
+                                    <span class="text-xs px-2 py-1 bg-gray-700 rounded-full">${genre.charAt(0).toUpperCase() + genre.slice(1)}</span>
+                                `).join('')}
+                            </div>
+                            <p class="text-gray-300 text-sm">${movie.description}</p>
+                            <div class="mt-4 flex justify-between items-center">
+                                <a href="#" class="text-blue-400 hover:text-blue-300 text-sm font-medium">
+                                    <i class="fas fa-info-circle mr-1"></i> More info
+                                </a>
+                                <button class="px-3 py-1 bg-blue-600 hover:bg-blue-500 rounded text-sm">
+                                    <i class="fas fa-plus mr-1"></i> Watchlist
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    recommendationsContainer.appendChild(card);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
